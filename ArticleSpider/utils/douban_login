@@ -1,0 +1,78 @@
+# coding=utf-8
+import requests
+try:
+    import cookielib
+except:
+    import http.cookiejar as cookielib
+import re
+
+
+header = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36',
+    'Origin': 'https: //accounts.douban.com',
+    'Host': 'accounts.douban.com',
+    'Content-Type':'application/x-www-form-urlencoded'
+}
+session = requests.session()
+session.headers.update(header)
+# session.cookies = cookielib.LWPCookieJar(filename='cookies.txt')
+# try:
+#     session.cookies.load(ignore_discard=True)
+# except:
+#     print("cookie未能加载")
+
+
+def login():
+    url = 'https://accounts.douban.com/login'
+    response = session.get(url, headers=header)
+    captcha_id, captcha_url = get_capcha(response.text)
+
+    #post login request
+    post_data = {
+        'source': 'None',
+        'form_email': '15769582274',
+        'form_password': 'WY19960721.',
+        'redir': 'https: // www.douban.com',
+    }
+    if captcha_id:
+        captcha_solution = input("请输入" + captcha_url + '\n')
+        post_data['captcha-solution'] = captcha_solution
+        post_data['captcha-id'] = captcha_id
+
+    response2 = session.post(url, data=post_data, headers=header)
+    pass
+
+
+def get_capcha(html):
+    #<input type="hidden" name="captcha-id" value="dMs3N5meUxkQDAYdQ8kDJz75:en">
+    cap_id = re.findall('.*name="captcha-id" value="(.*?)".*', html)
+    cap_url = re.findall('.*id="captcha_image" src="(.*?)".*', html)
+    try:
+        return cap_id[0], cap_url[0]
+    except:
+        return None, None
+
+def edit_signature(signature):
+    url = 'https://www.douban.com/people/75248411/'
+    response = session.get(url, headers=header)
+    ck = get_ck(response.text)
+
+    urll = 'https://www.douban.com/j/people/75248411/edit_signature'
+    post_data = {
+        'ck': ck,
+        'signature': signature
+    }
+    response = session.post(url, post_data, headers=header)
+    pass
+
+
+
+def get_ck(html):
+    ck = re.findall('.*name="ck" value="(.*?).*"', html)
+    try:
+        return ck[0]
+    except:
+        return ''
+
+login()
+edit_signature('哈哈哈哈哈哈哈')
